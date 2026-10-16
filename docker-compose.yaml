@@ -1,0 +1,114 @@
+# Slice Shop: the lab for the OpenTelemetry Full Course.
+# The app services have no OpenTelemetry code. Python runs under `opentelemetry-instrument`
+# and Node under `--require @opentelemetry/auto-instrumentations-node/register` (zero-code).
+
+x-otel-env: &otel-env
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: otlp
+  OTEL_LOGS_EXPORTER: otlp
+  OTEL_METRIC_EXPORT_INTERVAL: "10000"
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=lab
+
+x-python-otel-env: &python-otel-env
+  <<: *otel-env
+  OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
+  # Only the stable HTTP semantic conventions (http.server.request.duration in seconds), not old + new.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
+
+services:
+  frontend:
+    build: services/frontend
+    environment:
+      <<: *otel-env
+      OTEL_SERVICE_NAME: frontend
+      # Local detectors only; the default list also probes cloud metadata endpoints that don't exist here.
+      OTEL_NODE_RESOURCE_DETECTORS: env,host,os,process
+      CHECKOUT_URL: http://checkout:8001
+    ports: ["8080:8080"]
+    depends_on: [checkout, collector]
+
+  checkout:
+    build: services/checkout
+    environment:
+      <<: *python-otel-env
+      OTEL_SERVICE_NAME: checkout
+      DATABASE_URL: postgresql://slice:slice@postgres:5432/slice
+      KITCHEN_URL: http://kitchen:8002
+      PAYMENTS_URL: http://payments:8003
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+      collector: { condition: service_started }
+
+  kitchen:
+    build: services/kitchen
+    environment:
+      <<: *python-otel-env
+      OTEL_SERVICE_NAME: kitchen
+    depends_on: [collector]
+
+  payments:
+    build: services/payments
+    environment:
+      <<: *python-otel-env
+      OTEL_SERVICE_NAME: payments
+    depends_on: [collector]
+
+  loadgen:
+    build: services/loadgen
+    environment:
+      FRONTEND_URL: http://frontend:8080
+      ORDERS_PER_SECOND: "2"
+    depends_on: [frontend]
+
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: slice
+      POSTGRES_PASSWORD: slice
+      POSTGRES_DB: slice
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "slice"]
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:8.10.2
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.162.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./collector/config.yaml:/etc/otelcol/config.yaml:ro
+    ports: ["4317:4317", "4318:4318"]
+    depends_on: [jaeger, prometheus, loki]
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    ports: ["16686:16686"]
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --web.enable-otlp-receiver
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+    ports: ["9090:9090"]
+
+  loki:
+    image: grafana/loki:3.6.18
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports: ["3000:3000"]
+    depends_on: [prometheus, loki, jaeger]
