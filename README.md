@@ -49,3 +49,7 @@ latency histogram's p99, then the trace, then the gateway in the log line next t
 Collector contrib 0.162.0 · Jaeger 2.22.0 · Prometheus 3.15.0 · Loki 3.6.18 · Grafana 13.2.4 ·
 opentelemetry-distro 0.66b1 / exporter-otlp 1.45.1 · auto-instrumentations-node 0.81.1 ·
 Python 3.13 · Node 24 · Postgres 18.6 · Redis 8.10.2
+
+## License
+
+MIT, see [LICENSE](LICENSE). Use it, fork it, break it on purpose.
