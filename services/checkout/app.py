@@ -9,6 +9,7 @@ import httpx
 import psycopg
 import redis
 from fastapi import FastAPI, HTTPException
+from opentelemetry import trace
 from pydantic import BaseModel
 
 log = logging.getLogger("checkout")
@@ -54,6 +55,10 @@ def price_of(pizza: str) -> int:
 @app.post("/checkout")
 def checkout(order: Order):
     order_id = uuid.uuid4().hex[:8]
+    # Chapter 4: enrich the span FastAPI already started, instead of making a new one.
+    span = trace.get_current_span()
+    span.set_attribute("order.id", order_id)
+    span.set_attribute("order.pizza", order.pizza)
     price = price_of(order.pizza)
 
     payment = httpx.post(

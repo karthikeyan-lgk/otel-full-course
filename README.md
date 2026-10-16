@@ -38,6 +38,18 @@ make down
 | Grafana (metrics, logs, traces) | http://localhost:3000 |
 | Prometheus | http://localhost:9090 |
 
+## Following the course
+
+`main` is the lab as of the latest chapter. Each chapter that changes the code starts from a tag:
+
+| Tag | State | Use it for |
+| --- | --- | --- |
+| `chapter-03` | zero-code instrumentation only, no OpenTelemetry in the app code | chapters 1–4 |
+
+```sh
+git checkout chapter-03   # then type the chapter 4 changes in yourself
+```
+
 ## The bug the course hunts
 
 Cards starting with `5` go through the old `legacy-gw` gateway in payments. About a quarter of those
