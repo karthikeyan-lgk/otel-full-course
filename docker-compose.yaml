@@ -24,6 +24,10 @@ services:
       OTEL_SERVICE_NAME: frontend
       # Local detectors only; the default list also probes cloud metadata endpoints that don't exist here.
       OTEL_NODE_RESOURCE_DETECTORS: env,host,os,process
+      # Chapter 8: head sampling, decided here at the front door before anything happens.
+      # Uncomment to keep 1 trace in 100; the Python services follow the frontend's decision.
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      # OTEL_TRACES_SAMPLER_ARG: "0.01"
       CHECKOUT_URL: http://checkout:8001
     ports: ["8080:8080"]
     depends_on: [checkout, collector]

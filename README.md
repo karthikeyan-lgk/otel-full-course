@@ -48,12 +48,14 @@ make down
 | `chapter-04` | plus the chapter 4 spans and attributes (checkout, payments) | chapter 5 |
 | `chapter-05` | plus the chapter 5 metrics and exemplars (payments) | chapter 6 |
 | `chapter-06` | plus the chapter 6 logging (pino frontend, quieter libraries) | chapter 7 |
+| `chapter-07` | plus the chapter 7 Collector (filter, IP scrub, span metrics, self-monitoring) | chapter 8 |
 
 ```sh
 git checkout chapter-03   # then type the chapter 4 changes in yourself
 git checkout chapter-04   # then add the chapter 5 metrics yourself
 git checkout chapter-05   # then add the chapter 6 logging changes yourself
 git checkout chapter-06   # then build the chapter 7 Collector config yourself
+git checkout chapter-07   # then try head sampling and build the chapter 8 tail sampling yourself
 ```
 
 ## The bug the course hunts

@@ -1,5 +1,6 @@
 # Slice Shop Collector. Chapter 2 started with receive -> protect -> batch -> export;
-# chapter 7 adds the filter, the attribute scrub, span_metrics and the Collector's own metrics.
+# chapter 7 adds the filter, the attribute scrub, span_metrics and the Collector's own metrics;
+# chapter 8 adds tail sampling.
 receivers:
   otlp:
     protocols:
@@ -31,6 +32,25 @@ processors:
       - key: client.port
         action: delete
 
+  # Chapter 8: wait until a trace is complete, then decide. Keep every error and every slow
+  # trace, and one in ten of the boring rest. If any policy says "keep", the trace is kept.
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 1000
+      - name: one-in-ten
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
   # Last before the exporters: fewer, bigger requests to the backends.
   batch: {}
 
@@ -38,6 +58,9 @@ connectors:
   # Chapter 7: turns every span into request, error and duration metrics, even for
   # Redis and Postgres calls, which send no metrics of their own.
   span_metrics: {}
+  # Chapter 8: hands every span on to the sampling pipeline, so span_metrics above still counts
+  # 100% of the requests and only Jaeger gets the sampled traces.
+  forward/sampling: {}
 
 exporters:
   otlp_grpc/jaeger:
@@ -64,8 +87,12 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, filter/asgi_noise, attributes/scrub, batch]
-      exporters: [otlp_grpc/jaeger, span_metrics, debug]
+      processors: [memory_limiter, filter/asgi_noise, attributes/scrub]
+      exporters: [span_metrics, forward/sampling]
+    traces/sampled:
+      receivers: [forward/sampling]
+      processors: [tail_sampling, batch]
+      exporters: [otlp_grpc/jaeger, debug]
     metrics:
       receivers: [otlp, span_metrics]
       processors: [memory_limiter, batch]
