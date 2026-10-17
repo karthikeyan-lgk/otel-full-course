@@ -13,7 +13,6 @@ x-otel-env: &otel-env
 
 x-python-otel-env: &python-otel-env
   <<: *otel-env
-  OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "true"
   # Only the stable HTTP semantic conventions (http.server.request.duration in seconds), not old + new.
   OTEL_SEMCONV_STABILITY_OPT_IN: http
 

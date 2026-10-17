@@ -8,6 +8,8 @@ from flask import Flask, request
 
 log = logging.getLogger("kitchen")
 logging.basicConfig(level=logging.INFO)
+# Chapter 6: werkzeug logs an access line for every request, which is already a span.
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 app = Flask(__name__)
 

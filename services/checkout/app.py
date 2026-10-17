@@ -14,6 +14,8 @@ from pydantic import BaseModel
 
 log = logging.getLogger("checkout")
 logging.basicConfig(level=logging.INFO)
+# Chapter 6: httpx logs an INFO line for every outgoing call, which is already a span.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 KITCHEN_URL = os.environ["KITCHEN_URL"]
