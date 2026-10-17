@@ -1,4 +1,5 @@
-# Baseline Collector pipeline (chapter 2). Chapter 7 builds on this one piece at a time.
+# Slice Shop Collector. Chapter 2 started with receive -> protect -> batch -> export;
+# chapter 7 adds the filter, the attribute scrub, span_metrics and the Collector's own metrics.
 receivers:
   otlp:
     protocols:
@@ -8,11 +9,35 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  # First in every pipeline: refuse data before the Collector runs out of memory.
   memory_limiter:
     check_interval: 1s
     limit_percentage: 80
     spike_limit_percentage: 20
+
+  # Chapter 7: FastAPI's zero-code instrumentation adds an "http receive" and two "http send"
+  # spans to every request. They only say the ASGI server moved bytes, so drop them here.
+  filter/asgi_noise:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["asgi.event.type"] != nil'
+
+  # Chapter 7: the caller's IP is personal data on a real frontend. Remove it before it's stored.
+  attributes/scrub:
+    actions:
+      - key: client.address
+        action: delete
+      - key: client.port
+        action: delete
+
+  # Last before the exporters: fewer, bigger requests to the backends.
   batch: {}
+
+connectors:
+  # Chapter 7: turns every span into request, error and duration metrics, even for
+  # Redis and Postgres calls, which send no metrics of their own.
+  span_metrics: {}
 
 exporters:
   otlp_grpc/jaeger:
@@ -27,13 +52,22 @@ exporters:
     verbosity: basic
 
 service:
+  # Chapter 7: the Collector's own metrics (spans in, dropped, out) go to Prometheus too.
+  telemetry:
+    metrics:
+      readers:
+        - periodic:
+            exporter:
+              otlp:
+                protocol: http/protobuf
+                endpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [otlp_grpc/jaeger, debug]
+      processors: [memory_limiter, filter/asgi_noise, attributes/scrub, batch]
+      exporters: [otlp_grpc/jaeger, span_metrics, debug]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, span_metrics]
       processors: [memory_limiter, batch]
       exporters: [otlp_http/prometheus]
     logs:
