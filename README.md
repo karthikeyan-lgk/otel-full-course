@@ -45,9 +45,11 @@ make down
 | Tag | State | Use it for |
 | --- | --- | --- |
 | `chapter-03` | zero-code instrumentation only, no OpenTelemetry in the app code | chapters 1–4 |
+| `chapter-04` | plus the chapter 4 spans and attributes (checkout, payments) | chapter 5 |
 
 ```sh
 git checkout chapter-03   # then type the chapter 4 changes in yourself
+git checkout chapter-04   # then add the chapter 5 metrics yourself
 ```
 
 ## The bug the course hunts

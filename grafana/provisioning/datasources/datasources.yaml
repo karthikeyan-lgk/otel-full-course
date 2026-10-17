@@ -6,6 +6,11 @@ datasources:
     type: prometheus
     url: http://prometheus:9090
     isDefault: true
+    jsonData:
+      # Exemplars from OTLP carry the trace id in a trace_id label: open it in Jaeger.
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: jaeger
 
   - name: Jaeger
     uid: jaeger

@@ -10,12 +10,24 @@ import random
 import time
 
 from fastapi import FastAPI, HTTPException
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from pydantic import BaseModel
 
 log = logging.getLogger("payments")
 tracer = trace.get_tracer("slice-shop.payments")
+meter = metrics.get_meter("slice-shop.payments")
 logging.basicConfig(level=logging.INFO)
+
+# Chapter 5: two numbers the shop actually cares about, by gateway.
+charges = meter.create_counter(
+    "payments.charges", unit="{charge}", description="Card charges, by gateway and outcome"
+)
+gateway_duration = meter.create_histogram(
+    "payments.gateway.duration",
+    unit="s",
+    description="How long the card gateway took to answer",
+    explicit_bucket_boundaries_advisory=[0.05, 0.1, 0.25, 0.5, 1, 1.5, 2, 3, 5],
+)
 
 app = FastAPI()
 
@@ -46,6 +58,13 @@ def call_gateway(gateway: str) -> None:
         time.sleep(random.uniform(0.03, 0.08))
 
 
+def record_charge(gateway: str, outcome: str, started: float) -> None:
+    # Recorded inside the span, so the SDK can attach this trace as an exemplar.
+    attrs = {"payment.gateway": gateway}
+    gateway_duration.record(time.perf_counter() - started, attrs)
+    charges.add(1, {**attrs, "payment.outcome": outcome})
+
+
 @app.post("/charge")
 def charge(req: Charge):
     gateway = gateway_for(req.card)
@@ -55,12 +74,15 @@ def charge(req: Charge):
         span.set_attribute("payment.gateway", gateway)
         span.set_attribute("payment.card.brand", brand_of(req.card))
         span.set_attribute("payment.amount", req.amount)
+        started = time.perf_counter()
         try:
             call_gateway(gateway)
         except TimeoutError as e:
             # Leaving the with-block with an exception records it on the span and marks it ERROR.
             log.error("order %s: %s", req.order_id, e)
+            record_charge(gateway, "timeout", started)
             raise HTTPException(504, f"{gateway} timeout") from e
+        record_charge(gateway, "charged", started)
         span.add_event("charged")
 
     log.info("order %s: charged %d via %s", req.order_id, req.amount, gateway)
