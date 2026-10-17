@@ -7,10 +7,12 @@ datasources:
     url: http://prometheus:9090
     isDefault: true
     jsonData:
-      # Exemplars from OTLP carry the trace id in a trace_id label: open it in Jaeger.
+      # Exemplars from OTLP carry the trace id in a trace_id label: open it in the Jaeger UI.
+      # (A link, not datasourceUid: Grafana's Jaeger data source can't read Jaeger 2's API yet.)
       exemplarTraceIdDestinations:
         - name: trace_id
-          datasourceUid: jaeger
+          url: http://localhost:16686/trace/$${__value.raw}
+          urlDisplayLabel: Open in Jaeger
 
   - name: Jaeger
     uid: jaeger
@@ -27,5 +29,5 @@ datasources:
         - name: TraceID
           matcherType: label
           matcherRegex: trace_id
-          url: "$${__value.raw}"
-          datasourceUid: jaeger
+          url: http://localhost:16686/trace/$${__value.raw}
+          urlDisplayLabel: Open in Jaeger
