@@ -66,6 +66,7 @@ The shop's start commands have no OpenTelemetry in them. One annotation per pod
 | `chapter-06` | plus the chapter 6 logging (pino frontend, quieter libraries) | chapter 7 |
 | `chapter-07` | plus the chapter 7 Collector (filter, IP scrub, span metrics, self-monitoring) | chapter 8 |
 | `chapter-08` | plus the chapter 8 tail sampling (head sampling lines commented in compose) | chapter 9 |
+| `chapter-09` | plus the chapter 9 Kubernetes lab (`k8s/`, `make k8s-up`) | chapter 10 |
 
 ```sh
 git checkout chapter-03   # then type the chapter 4 changes in yourself
@@ -74,6 +75,7 @@ git checkout chapter-05   # then add the chapter 6 logging changes yourself
 git checkout chapter-06   # then build the chapter 7 Collector config yourself
 git checkout chapter-07   # then try head sampling and build the chapter 8 tail sampling yourself
 git checkout chapter-08   # then add the chapter 9 k8s/ folder and make targets yourself
+git checkout chapter-09   # then work through the chapter 10 checklist yourself
 ```
 
 ## The bug the course hunts

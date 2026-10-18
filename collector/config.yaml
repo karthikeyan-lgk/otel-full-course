@@ -1,6 +1,6 @@
 # Slice Shop Collector. Chapter 2 started with receive -> protect -> batch -> export;
 # chapter 7 adds the filter, the attribute scrub, span_metrics and the Collector's own metrics;
-# chapter 8 adds tail sampling.
+# chapter 8 adds tail sampling, chapter 10 redaction.
 receivers:
   otlp:
     protocols:
@@ -32,6 +32,14 @@ processors:
       - key: client.port
         action: delete
 
+  # Chapter 10: a safety net for data nobody meant to send. Any attribute value that looks like a
+  # card number (13 to 19 digits in a row) is masked, whatever its key, in every service.
+  redaction:
+    allow_all_keys: true
+    blocked_values:
+      - "\\b[0-9]{13,19}\\b"
+    summary: info
+
   # Chapter 8: wait until a trace is complete, then decide. Keep every error and every slow
   # trace, and one in ten of the boring rest. If any policy says "keep", the trace is kept.
   tail_sampling:
@@ -57,7 +65,13 @@ processors:
 connectors:
   # Chapter 7: turns every span into request, error and duration metrics, even for
   # Redis and Postgres calls, which send no metrics of their own.
-  span_metrics: {}
+  span_metrics:
+    # Chapter 10: 8 buckets instead of the default 16. Every bucket is a separate series for every
+    # service, span name, kind and status, so this nearly halves the connector's series. The price:
+    # a quantile is only as precise as the bucket it lands in, so put the edges where you decide things.
+    histogram:
+      explicit:
+        buckets: [2ms, 5ms, 25ms, 100ms, 500ms, 1s, 2s, 5s]
   # Chapter 8: hands every span on to the sampling pipeline, so span_metrics above still counts
   # 100% of the requests and only Jaeger gets the sampled traces.
   forward/sampling: {}
@@ -87,7 +101,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, filter/asgi_noise, attributes/scrub]
+      processors: [memory_limiter, filter/asgi_noise, attributes/scrub, redaction]
       exporters: [span_metrics, forward/sampling]
     traces/sampled:
       receivers: [forward/sampling]
@@ -99,5 +113,5 @@ service:
       exporters: [otlp_http/prometheus]
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, redaction, batch]
       exporters: [otlp_http/loki]

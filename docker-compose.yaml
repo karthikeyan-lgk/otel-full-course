@@ -9,7 +9,8 @@ x-otel-env: &otel-env
   OTEL_METRICS_EXPORTER: otlp
   OTEL_LOGS_EXPORTER: otlp
   OTEL_METRIC_EXPORT_INTERVAL: "10000"
-  OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=lab
+  # Chapter 10: service.version, so a change in behaviour can be tied to a release.
+  OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=lab,service.version=1.0.0
 
 x-python-otel-env: &python-otel-env
   <<: *otel-env
@@ -50,6 +51,8 @@ services:
     environment:
       <<: *python-otel-env
       OTEL_SERVICE_NAME: kitchen
+      # Chapter 10: kitchen reads its SDK settings from a file instead (see services/kitchen/otel.yaml).
+      OTEL_CONFIG_FILE: /app/otel.yaml
     depends_on: [collector]
 
   payments:
