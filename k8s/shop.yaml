@@ -1,0 +1,234 @@
+# Chapter 9: Slice Shop on Kubernetes. The same images as docker-compose, but the commands no longer
+# mention OpenTelemetry: no opentelemetry-instrument, no --require. One annotation per pod asks the
+# Operator to inject it (see instrumentation.yaml). The "team" label ends up on every span via k8sattributes.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: slice-shop
+spec:
+  # Two of each, so Kubernetes spreads them over both nodes.
+  replicas: 2
+  selector:
+    matchLabels: { app: frontend }
+  template:
+    metadata:
+      labels: { app: frontend, team: storefront }
+      annotations:
+        instrumentation.opentelemetry.io/inject-nodejs: "true"
+    spec:
+      containers:
+        - name: frontend
+          image: slice-shop/frontend:lab
+          imagePullPolicy: Never
+          command: ["node", "server.js"]
+          ports:
+            - containerPort: 8080
+          env:
+            - { name: CHECKOUT_URL, value: "http://checkout:8001" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: slice-shop
+spec:
+  selector: { app: frontend }
+  ports:
+    - { port: 8080 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: slice-shop
+spec:
+  # Two of each, so Kubernetes spreads them over both nodes.
+  replicas: 2
+  selector:
+    matchLabels: { app: checkout }
+  template:
+    metadata:
+      labels: { app: checkout, team: orders }
+      annotations:
+        instrumentation.opentelemetry.io/inject-python: "true"
+    spec:
+      # Checkout creates its table on start, so wait for Postgres instead of crashing until it's up.
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:18.6
+          command: ["sh", "-c", "until pg_isready -h postgres -U slice; do sleep 1; done"]
+      containers:
+        - name: checkout
+          image: slice-shop/checkout:lab
+          imagePullPolicy: Never
+          command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
+          ports:
+            - containerPort: 8001
+          env:
+            - { name: DATABASE_URL, value: "postgresql://slice:slice@postgres:5432/slice" }
+            - { name: KITCHEN_URL, value: "http://kitchen:8002" }
+            - { name: PAYMENTS_URL, value: "http://payments:8003" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: slice-shop
+spec:
+  selector: { app: checkout }
+  ports:
+    - { port: 8001 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kitchen
+  namespace: slice-shop
+spec:
+  # Two of each, so Kubernetes spreads them over both nodes.
+  replicas: 2
+  selector:
+    matchLabels: { app: kitchen }
+  template:
+    metadata:
+      labels: { app: kitchen, team: kitchen }
+      annotations:
+        instrumentation.opentelemetry.io/inject-python: "true"
+    spec:
+      containers:
+        - name: kitchen
+          image: slice-shop/kitchen:lab
+          imagePullPolicy: Never
+          command: ["flask", "--app", "app", "run", "--host", "0.0.0.0", "--port", "8002"]
+          ports:
+            - containerPort: 8002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kitchen
+  namespace: slice-shop
+spec:
+  selector: { app: kitchen }
+  ports:
+    - { port: 8002 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments
+  namespace: slice-shop
+spec:
+  # Two of each, so Kubernetes spreads them over both nodes.
+  replicas: 2
+  selector:
+    matchLabels: { app: payments }
+  template:
+    metadata:
+      labels: { app: payments, team: payments }
+      annotations:
+        instrumentation.opentelemetry.io/inject-python: "true"
+    spec:
+      containers:
+        - name: payments
+          image: slice-shop/payments:lab
+          imagePullPolicy: Never
+          command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8003"]
+          ports:
+            - containerPort: 8003
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments
+  namespace: slice-shop
+spec:
+  selector: { app: payments }
+  ports:
+    - { port: 8003 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: slice-shop
+spec:
+  selector:
+    matchLabels: { app: loadgen }
+  template:
+    metadata:
+      labels: { app: loadgen }
+    spec:
+      containers:
+        - name: loadgen
+          image: slice-shop/loadgen:lab
+          imagePullPolicy: Never
+          env:
+            - { name: FRONTEND_URL, value: "http://frontend:8080" }
+            - { name: ORDERS_PER_SECOND, value: "2" }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: slice-shop
+spec:
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18.6
+          env:
+            - { name: POSTGRES_USER, value: slice }
+            - { name: POSTGRES_PASSWORD, value: slice }
+            - { name: POSTGRES_DB, value: slice }
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: [pg_isready, -U, slice]
+            periodSeconds: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: slice-shop
+spec:
+  selector: { app: postgres }
+  ports:
+    - { port: 5432 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: slice-shop
+spec:
+  selector:
+    matchLabels: { app: redis }
+  template:
+    metadata:
+      labels: { app: redis }
+    spec:
+      containers:
+        - name: redis
+          image: redis:8.10.2
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: slice-shop
+spec:
+  selector: { app: redis }
+  ports:
+    - { port: 6379 }

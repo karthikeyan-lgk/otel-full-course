@@ -38,6 +38,22 @@ make down
 | Grafana (metrics, logs, traces) | http://localhost:3000 |
 | Prometheus | http://localhost:9090 |
 
+## Run it on Kubernetes (chapter 9)
+
+Needs [kind](https://kind.sigs.k8s.io/), kubectl and helm, and about 3 GB of RAM. Stop the compose lab first
+(`make down`), because both use the same localhost ports.
+
+```sh
+make k8s-up      # two-node kind cluster, OpenTelemetry Operator, agent + gateway Collectors, Jaeger, Prometheus, the shop
+make k8s-ui      # forwards the shop, Jaeger and Prometheus to localhost:8080 / 16686 / 9090
+make k8s-down    # delete the cluster
+```
+
+The shop's start commands have no OpenTelemetry in them. One annotation per pod
+(`instrumentation.opentelemetry.io/inject-python: "true"`) asks the Operator to inject the SDK, using the
+`Instrumentation` in `k8s/instrumentation.yaml`. An agent Collector on every node adds Kubernetes metadata
+(`k8sattributes`); a gateway Collector does the chapter 7 and 8 processing once.
+
 ## Following the course
 
 `main` is the lab as of the latest chapter. Each chapter that changes the code starts from a tag:
@@ -49,6 +65,7 @@ make down
 | `chapter-05` | plus the chapter 5 metrics and exemplars (payments) | chapter 6 |
 | `chapter-06` | plus the chapter 6 logging (pino frontend, quieter libraries) | chapter 7 |
 | `chapter-07` | plus the chapter 7 Collector (filter, IP scrub, span metrics, self-monitoring) | chapter 8 |
+| `chapter-08` | plus the chapter 8 tail sampling (head sampling lines commented in compose) | chapter 9 |
 
 ```sh
 git checkout chapter-03   # then type the chapter 4 changes in yourself
@@ -56,6 +73,7 @@ git checkout chapter-04   # then add the chapter 5 metrics yourself
 git checkout chapter-05   # then add the chapter 6 logging changes yourself
 git checkout chapter-06   # then build the chapter 7 Collector config yourself
 git checkout chapter-07   # then try head sampling and build the chapter 8 tail sampling yourself
+git checkout chapter-08   # then add the chapter 9 k8s/ folder and make targets yourself
 ```
 
 ## The bug the course hunts

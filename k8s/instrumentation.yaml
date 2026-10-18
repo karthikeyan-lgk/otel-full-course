@@ -1,0 +1,39 @@
+# Chapter 9: the zero-code setup from docker-compose, as one Kubernetes object.
+# A pod annotated instrumentation.opentelemetry.io/inject-python (or -nodejs) gets an init container
+# that copies the OpenTelemetry SDK in, plus these environment variables. The app's command stays plain.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: slice-shop
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: slice-shop
+  namespace: slice-shop
+spec:
+  exporter:
+    # The agent Collector on the pod's own node. The Operator sets OTEL_NODE_IP on every pod it injects.
+    endpoint: http://$(OTEL_NODE_IP):4318
+  propagators: [tracecontext, baggage]
+  sampler:
+    type: parentbased_always_on
+  env:
+    - name: OTEL_EXPORTER_OTLP_PROTOCOL
+      value: http/protobuf
+    - name: OTEL_METRIC_EXPORT_INTERVAL
+      value: "10000"
+    - name: OTEL_RESOURCE_ATTRIBUTES
+      value: deployment.environment.name=lab
+  python:
+    env:
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+        value: "true"
+      - name: OTEL_SEMCONV_STABILITY_OPT_IN
+        value: http
+  nodejs:
+    env:
+      - name: OTEL_NODE_RESOURCE_DETECTORS
+        value: env,host,os,process

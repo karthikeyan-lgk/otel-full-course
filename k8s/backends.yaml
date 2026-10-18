@@ -1,0 +1,91 @@
+# Chapter 9: Jaeger and Prometheus inside the cluster, single pods, nothing kept on disk.
+# Logs go to the gateway's debug exporter here; point it at Loki the same way as in docker-compose.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: observability
+spec:
+  selector:
+    matchLabels: { app: jaeger }
+  template:
+    metadata:
+      labels: { app: jaeger }
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/jaeger:2.22.0
+          ports:
+            - containerPort: 4317
+            - containerPort: 16686
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: observability
+spec:
+  selector: { app: jaeger }
+  ports:
+    - { name: otlp-grpc, port: 4317 }
+    - { name: ui, port: 16686 }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus
+  namespace: observability
+data:
+  prometheus.yaml: |
+    # Everything arrives over OTLP from the gateway Collector; nothing is scraped.
+    otlp:
+      promote_resource_attributes:
+        - service.name
+        - deployment.environment.name
+        - k8s.namespace.name
+        - k8s.node.name
+        - k8s.pod.name
+    storage:
+      tsdb:
+        out_of_order_time_window: 30m
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  selector:
+    matchLabels: { app: prometheus }
+  template:
+    metadata:
+      labels: { app: prometheus }
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v3.15.0
+          args:
+            - --config.file=/etc/prometheus/prometheus.yaml
+            - --web.enable-otlp-receiver
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - { name: config, mountPath: /etc/prometheus }
+      volumes:
+        - name: config
+          configMap: { name: prometheus }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  selector: { app: prometheus }
+  ports:
+    - { name: http, port: 9090 }

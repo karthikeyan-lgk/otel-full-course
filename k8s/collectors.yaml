@@ -1,0 +1,190 @@
+# Chapter 9: two tiers of Collectors, both run by the OpenTelemetry Operator.
+#   agent   - a DaemonSet, one per node. Apps send to the agent on their own node, which adds
+#             Kubernetes metadata (k8sattributes) and passes everything on.
+#   gateway - a Deployment. The chapter 7 and 8 work happens here once: filter, scrub,
+#             span metrics, tail sampling, export.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: otel
+---
+# k8sattributes asks the Kubernetes API who owns the pod a span came from, so the agent may read
+# pods, namespaces, nodes and replica sets (a replica set tells it the Deployment's name).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-agent
+  namespace: otel
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-agent
+rules:
+  - apiGroups: [""]
+    resources: [pods, namespaces, nodes]
+    verbs: [get, watch, list]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, watch, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-agent
+subjects:
+  - kind: ServiceAccount
+    name: otel-agent
+    namespace: otel
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: agent
+  namespace: otel
+spec:
+  mode: daemonset
+  serviceAccount: otel-agent
+  # Listen on the node's own IP, so every pod can reach the agent on its node at $(OTEL_NODE_IP).
+  hostNetwork: true
+  env:
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 20
+      # Match each span, metric and log to the pod that sent it (by its IP), then copy the
+      # pod's metadata and its "team" label onto the resource.
+      k8sattributes:
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.deployment.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.node.name
+          labels:
+            - tag_name: team
+              key: team
+              from: pod
+        pod_association:
+          - sources:
+              - from: connection
+      batch: {}
+    exporters:
+      otlp_grpc/gateway:
+        endpoint: gateway-collector.otel.svc.cluster.local:4317
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [otlp_grpc/gateway]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [otlp_grpc/gateway]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [otlp_grpc/gateway]
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: gateway
+  namespace: otel
+spec:
+  mode: deployment
+  # One replica: tail sampling needs every span of a trace in the same Collector. More replicas
+  # need the load-balancing exporter in front (chapter 8).
+  replicas: 1
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 20
+      filter/asgi_noise:
+        error_mode: ignore
+        traces:
+          span:
+            - 'attributes["asgi.event.type"] != nil'
+      attributes/scrub:
+        actions:
+          - key: client.address
+            action: delete
+          - key: client.port
+            action: delete
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 50000
+        policies:
+          - name: errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: slow
+            type: latency
+            latency:
+              threshold_ms: 1000
+          - name: one-in-ten
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
+      batch: {}
+    connectors:
+      span_metrics: {}
+      forward/sampling: {}
+    exporters:
+      otlp_grpc/jaeger:
+        endpoint: jaeger.observability.svc.cluster.local:4317
+        tls:
+          insecure: true
+      otlp_http/prometheus:
+        endpoint: http://prometheus.observability.svc.cluster.local:9090/api/v1/otlp
+      debug:
+        verbosity: basic
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, filter/asgi_noise, attributes/scrub]
+          exporters: [span_metrics, forward/sampling]
+        traces/sampled:
+          receivers: [forward/sampling]
+          processors: [tail_sampling, batch]
+          exporters: [otlp_grpc/jaeger]
+        metrics:
+          receivers: [otlp, span_metrics]
+          processors: [memory_limiter, batch]
+          exporters: [otlp_http/prometheus]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [debug]

@@ -1,0 +1,7 @@
+# Chapter 9: a two-node Kubernetes cluster in Docker, so "one agent per node" has two nodes to show.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: slice-shop
+nodes:
+  - role: control-plane
+  - role: worker
