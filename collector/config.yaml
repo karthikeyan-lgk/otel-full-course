@@ -54,6 +54,12 @@ processors:
         type: latency
         latency:
           threshold_ms: 1000
+      # Chapter 11: model calls are rare and every one costs money, so keep every trace that has one.
+      - name: llm-calls
+        type: string_attribute
+        string_attribute:
+          key: gen_ai.operation.name
+          values: [chat]
       - name: one-in-ten
         type: probabilistic
         probabilistic:

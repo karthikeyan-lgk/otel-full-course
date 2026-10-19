@@ -1,4 +1,4 @@
-.PHONY: up down reset logs order slow-order k8s-up k8s-ui k8s-down
+.PHONY: up down reset logs order slow-order suggest k8s-up k8s-ui k8s-down
 
 up:          ## build and start the whole lab
 	docker compose up -d --build
@@ -18,6 +18,9 @@ order:       ## place one order with a Visa card (fast gateway)
 slow-order:  ## place one order with a Mastercard (legacy gateway, sometimes slow)
 	@curl -s -X POST localhost:8080/order -H 'content-type: application/json' \
 	  -d '{"pizza":"pepperoni","card":"5555555555554444"}'; echo
+
+suggest:     ## ask the model for a topping (chapter 11, needs LLM_API_KEY)
+	@curl -s 'localhost:8080/suggest?pizza=margherita'; echo
 
 # Chapter 9: the same shop on Kubernetes (kind), instrumented by the OpenTelemetry Operator.
 # Needs kind, kubectl and helm. Uses about 3 GB of RAM; stop the docker-compose lab first (make down).

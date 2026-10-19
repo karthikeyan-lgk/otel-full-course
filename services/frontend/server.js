@@ -32,4 +32,10 @@ app.post("/order", async (req, res) => {
   res.status(resp.status).json(body);
 });
 
+// Chapter 11: ask checkout's model for a topping. Nothing calls this on its own, so it costs nothing until you do.
+app.get("/suggest", async (req, res) => {
+  const resp = await fetch(`${CHECKOUT_URL}/suggest?pizza=${encodeURIComponent(req.query.pizza ?? "")}`);
+  res.status(resp.status).json(await resp.json());
+});
+
 app.listen(8080, () => log.info("frontend listening on :8080"));

@@ -9,6 +9,7 @@ import httpx
 import psycopg
 import redis
 from fastapi import FastAPI, HTTPException
+from openai import OpenAI
 from opentelemetry import trace
 from pydantic import BaseModel
 
@@ -20,6 +21,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 DATABASE_URL = os.environ["DATABASE_URL"]
 KITCHEN_URL = os.environ["KITCHEN_URL"]
 PAYMENTS_URL = os.environ["PAYMENTS_URL"]
+# Chapter 11: any OpenAI-compatible endpoint. No key, no suggestions; the rest of the shop doesn't care.
+LLM_API_KEY = os.environ.get("LLM_API_KEY")
+LLM_MODEL = os.environ.get("LLM_MODEL", "mistralai/mistral-nemo")
+llm = OpenAI(base_url=os.environ.get("LLM_BASE_URL"), api_key=LLM_API_KEY) if LLM_API_KEY else None
 
 MENU = {"margherita": 299, "pepperoni": 399, "farmhouse": 449, "quattro formaggi": 499}
 cache = redis.Redis(host="redis", decode_responses=True)
@@ -82,3 +87,24 @@ def checkout(order: Order):
 
     log.info("order %s placed: %s for %d", order_id, order.pizza, price)
     return {"order_id": order_id, "pizza": order.pizza, "price": price}
+
+
+@app.get("/suggest")
+def suggest(pizza: str):
+    # Chapter 11: one model call. The openai instrumentation that opentelemetry-bootstrap installed
+    # turns it into a gen_ai span with the model, the token counts and how long it took.
+    if llm is None:
+        raise HTTPException(503, "set LLM_API_KEY to get suggestions")
+    if pizza not in MENU:
+        raise HTTPException(404, f"no such pizza: {pizza}")
+    resp = llm.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": "You work at Slice Shop. Answer with one topping, nothing else."},
+            {"role": "user", "content": f"What one extra topping goes best on a {pizza} pizza?"},
+        ],
+        max_tokens=10,
+    )
+    topping = resp.choices[0].message.content.strip()
+    log.info("suggested %s for %s", topping, pizza)
+    return {"pizza": pizza, "topping": topping}

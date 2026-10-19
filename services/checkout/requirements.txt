@@ -3,5 +3,10 @@ uvicorn==0.54.0
 httpx==0.28.1
 psycopg[binary]==3.3.6
 redis==8.1.0
+openai==3.35.1
 opentelemetry-distro==0.66b1
 opentelemetry-exporter-otlp==1.45.1
+# Chapter 11: opentelemetry-bootstrap would add openai-v2 on its own, but the newest util-genai (1.2b0)
+# dropped a module it imports, and the failed import is silent: no gen_ai spans, no error. Pin the pair.
+opentelemetry-instrumentation-openai-v2==2.4b0
+opentelemetry-util-genai==1.1b0

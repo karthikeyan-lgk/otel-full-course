@@ -54,6 +54,23 @@ The shop's start commands have no OpenTelemetry in them. One annotation per pod
 `Instrumentation` in `k8s/instrumentation.yaml`. An agent Collector on every node adds Kubernetes metadata
 (`k8sattributes`); a gateway Collector does the chapter 7 and 8 processing once.
 
+## Trace an LLM call (chapter 11)
+
+`GET /suggest?pizza=margherita` asks a model for one extra topping. Checkout calls it with the `openai` SDK,
+and `opentelemetry-bootstrap` adds the GenAI instrumentation, so the call becomes a `chat` span with the model
+and the token counts, plus `gen_ai.client.*` metrics. Any OpenAI-compatible endpoint works. Put the key in a
+`.env` file next to `docker-compose.yaml` (it's git-ignored):
+
+```sh
+echo 'LLM_API_KEY=sk-or-...' > .env    # OpenRouter by default; also set LLM_BASE_URL / LLM_MODEL for others
+make up
+make suggest
+```
+
+Without a key `/suggest` answers 503 and everything else works as before. Nothing calls it on its own, so it
+costs nothing until you do. Prompts and answers are not recorded unless you uncomment
+`OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` in the compose file.
+
 ## Following the course
 
 `main` is the lab as of the latest chapter. Each chapter that changes the code starts from a tag:
@@ -67,6 +84,7 @@ The shop's start commands have no OpenTelemetry in them. One annotation per pod
 | `chapter-07` | plus the chapter 7 Collector (filter, IP scrub, span metrics, self-monitoring) | chapter 8 |
 | `chapter-08` | plus the chapter 8 tail sampling (head sampling lines commented in compose) | chapter 9 |
 | `chapter-09` | plus the chapter 9 Kubernetes lab (`k8s/`, `make k8s-up`) | chapter 10 |
+| `chapter-10` | plus the chapter 10 checklist (service.version, kitchen config file, buckets, redaction) | chapter 11 |
 
 ```sh
 git checkout chapter-03   # then type the chapter 4 changes in yourself
@@ -76,6 +94,7 @@ git checkout chapter-06   # then build the chapter 7 Collector config yourself
 git checkout chapter-07   # then try head sampling and build the chapter 8 tail sampling yourself
 git checkout chapter-08   # then add the chapter 9 k8s/ folder and make targets yourself
 git checkout chapter-09   # then work through the chapter 10 checklist yourself
+git checkout chapter-10   # then add the chapter 11 model call yourself
 ```
 
 ## The bug the course hunts
@@ -88,6 +107,7 @@ latency histogram's p99, then the trace, then the gateway in the log line next t
 
 Collector contrib 0.162.0 · Jaeger 2.22.0 · Prometheus 3.15.0 · Loki 3.6.18 · Grafana 13.2.4 ·
 opentelemetry-distro 0.66b1 / exporter-otlp 1.45.1 · auto-instrumentations-node 0.81.1 ·
+openai 3.35.1 / instrumentation-openai-v2 2.4b0 / util-genai 1.1b0 ·
 Python 3.13 · Node 24 · Postgres 18.6 · Redis 8.10.2
 
 ## License
