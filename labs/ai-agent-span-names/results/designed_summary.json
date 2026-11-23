@@ -1,0 +1,40 @@
+{
+ "mode": "designed",
+ "service": "support-agent",
+ "conversations": 1000,
+ "wrong_answers": 24,
+ "wrong_by_tier": {
+  "free": 0,
+  "pro": 0,
+  "premium": 24
+ },
+ "refund_conversations": 287,
+ "spans": 6172,
+ "otlp_bytes": 1669286,
+ "bytes_per_conversation": 1669,
+ "span_names": [
+  "POST",
+  "chat support-model-1",
+  "execute_tool get_order_status",
+  "execute_tool get_refund_status",
+  "invoke_agent support-agent"
+ ],
+ "attribute_keys": [
+  "app.prompt.version",
+  "app.tool.result_count",
+  "app.user.tier",
+  "gen_ai.agent.name",
+  "gen_ai.conversation.id",
+  "gen_ai.operation.name",
+  "gen_ai.provider.name",
+  "gen_ai.request.model",
+  "gen_ai.tool.name",
+  "gen_ai.usage.input_tokens",
+  "gen_ai.usage.output_tokens",
+  "http.method",
+  "http.status_code",
+  "http.url"
+ ],
+ "seconds": 19.9,
+ "first_wrong_trace": "52acbd13621b621999554b8ad4b9a18d"
+}

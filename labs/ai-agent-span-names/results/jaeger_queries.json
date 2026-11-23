@@ -1,0 +1,47 @@
+{
+ "support-agent-generic": {
+  "operations": [
+   "POST",
+   "agent_call",
+   "llm_call",
+   "tool_call"
+  ],
+  "traces": 1000,
+  "span_status_codes": {
+   "UNSET": 6172
+  },
+  "tool_call_traces": 793
+ },
+ "support-agent": {
+  "operations": [
+   "POST",
+   "chat support-model-1",
+   "execute_tool get_order_status",
+   "execute_tool get_refund_status",
+   "invoke_agent support-agent"
+  ],
+  "traces": 1000,
+  "span_status_codes": {
+   "UNSET": 6172
+  },
+  "refund_tool_traces": 287,
+  "refund_tool_result_count_0": 24,
+  "result_count_0_any_operation": 24,
+  "empty_by_app.user.tier": {
+   "premium": 24
+  },
+  "refund_calls_by_app.user.tier": {
+   "free": 214,
+   "premium": 24,
+   "pro": 49
+  },
+  "empty_by_app.prompt.version": {
+   "refund-v4": 18,
+   "refund-v3": 6
+  },
+  "refund_calls_by_app.prompt.version": {
+   "refund-v4": 158,
+   "refund-v3": 129
+  }
+ }
+}

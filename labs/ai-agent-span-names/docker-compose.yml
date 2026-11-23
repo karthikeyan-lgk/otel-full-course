@@ -1,0 +1,18 @@
+# Span names + attributes lab: Collector (two spanmetrics connectors) -> Jaeger + Prometheus.
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.162.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["./collector.yaml:/etc/otelcol/config.yaml:ro"]
+    ports: ["4317:4317", "4318:4318", "8888:8888"]
+    mem_limit: 400m
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    ports: ["16686:16686"]
+    mem_limit: 600m
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--web.enable-otlp-receiver"]
+    volumes: ["./prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+    mem_limit: 500m

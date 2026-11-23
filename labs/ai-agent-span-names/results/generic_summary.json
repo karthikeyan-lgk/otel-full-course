@@ -1,0 +1,28 @@
+{
+ "mode": "generic",
+ "service": "support-agent-generic",
+ "conversations": 1000,
+ "wrong_answers": 24,
+ "wrong_by_tier": {
+  "free": 0,
+  "pro": 0,
+  "premium": 24
+ },
+ "refund_conversations": 287,
+ "spans": 6172,
+ "otlp_bytes": 747949,
+ "bytes_per_conversation": 748,
+ "span_names": [
+  "POST",
+  "agent_call",
+  "llm_call",
+  "tool_call"
+ ],
+ "attribute_keys": [
+  "http.method",
+  "http.status_code",
+  "http.url"
+ ],
+ "seconds": 19.9,
+ "first_wrong_trace": "91aa0872e417948e8218a9e0a21ab174"
+}

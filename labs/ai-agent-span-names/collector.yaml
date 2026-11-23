@@ -1,0 +1,28 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: {endpoint: 0.0.0.0:4317}
+      http: {endpoint: 0.0.0.0:4318}
+processors:
+  batch: {}
+connectors:
+  # RED metrics per operation, split by the two attributes you actually filter dashboards by.
+  spanmetrics/lean:
+    namespace: lean
+    dimensions: [{name: gen_ai.tool.name}, {name: app.user.tier}]
+    metrics_flush_interval: 5s
+  # The same, plus the conversation id: the "put every attribute on the dashboard" trap.
+  spanmetrics/session:
+    namespace: session
+    dimensions: [{name: gen_ai.tool.name}, {name: app.user.tier}, {name: gen_ai.conversation.id}]
+    metrics_flush_interval: 5s
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls: {insecure: true}
+  otlphttp/prometheus:
+    endpoint: http://prometheus:9090/api/v1/otlp
+service:
+  pipelines:
+    traces: {receivers: [otlp], processors: [batch], exporters: [otlp/jaeger, spanmetrics/lean, spanmetrics/session]}
+    metrics: {receivers: [otlp, spanmetrics/lean, spanmetrics/session], processors: [batch], exporters: [otlphttp/prometheus]}

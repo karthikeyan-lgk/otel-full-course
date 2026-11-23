@@ -103,6 +103,12 @@ Cards starting with `5` go through the old `legacy-gw` gateway in payments. Abou
 charges take 1.2–2 s, and 4% time out after 3 s (504). The logs never say "slow". You find it with the
 latency histogram's p99, then the trace, then the gateway in the log line next to that trace.
 
+## Extra labs
+
+| Lab | Video |
+| --- | --- |
+| [`labs/ai-agent-span-names`](labs/ai-agent-span-names/): generic span names vs GenAI names + attributes, and the spanmetrics cardinality trap | AI Agent Observability: My Traces Hid 24 Wrong Answers |
+
 ## Versions (pinned)
 
 Collector contrib 0.162.0 · Jaeger 2.22.0 · Prometheus 3.15.0 · Loki 3.6.18 · Grafana 13.2.4 ·
