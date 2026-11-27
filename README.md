@@ -108,6 +108,7 @@ latency histogram's p99, then the trace, then the gateway in the log line next t
 | Lab | Video |
 | --- | --- |
 | [`labs/ai-agent-span-names`](labs/ai-agent-span-names/): generic span names vs GenAI names + attributes, and the spanmetrics cardinality trap | AI Agent Observability: My Traces Hid 24 Wrong Answers |
+| [`labs/llm-prompt-caching`](labs/llm-prompt-caching/): where a changing line in the system prompt breaks prompt caching, measured with OpenTelemetry on two models | Prompt Caching Explained: One Timestamp Killed My Cache |
 
 ## Versions (pinned)
 

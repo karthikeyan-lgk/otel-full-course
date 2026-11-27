@@ -1,0 +1,303 @@
+{
+ "calls": 1289,
+ "spent_usd": 0.08376,
+ "timestamp": {
+  "gpt/no_cache": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "0/95",
+   "cache_read_share_of_input": 0.0,
+   "cache_read_tokens": 0,
+   "cache_write_tokens": 0,
+   "cost_per_chat_usd": 0.002417,
+   "ttft_median_hit_s": null,
+   "ttft_median_miss_s": 0.983
+  },
+  "gpt/ts_end": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "76/95",
+   "cache_read_share_of_input": 0.674,
+   "cache_read_tokens": 132480,
+   "cache_write_tokens": 0,
+   "cost_per_chat_usd": 0.001236,
+   "ttft_median_hit_s": 0.98,
+   "ttft_median_miss_s": 0.944
+  },
+  "gpt/ts_first": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "0/95",
+   "cache_read_share_of_input": 0.0,
+   "cache_read_tokens": 0,
+   "cache_write_tokens": 0,
+   "cost_per_chat_usd": 0.002408,
+   "ttft_median_hit_s": null,
+   "ttft_median_miss_s": 0.988
+  },
+  "gpt/ts_last": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "75/95",
+   "cache_read_share_of_input": 0.489,
+   "cache_read_tokens": 96000,
+   "cache_write_tokens": 0,
+   "cost_per_chat_usd": 0.001564,
+   "ttft_median_hit_s": 0.901,
+   "ttft_median_miss_s": 0.913
+  },
+  "gpt/ts_msg": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "78/95",
+   "cache_read_share_of_input": 0.51,
+   "cache_read_tokens": 99840,
+   "cache_write_tokens": 0,
+   "cost_per_chat_usd": 0.001519,
+   "ttft_median_hit_s": 0.899,
+   "ttft_median_miss_s": 0.897
+  },
+  "qwen/no_cache": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "0/95",
+   "cache_read_share_of_input": 0.0,
+   "cache_read_tokens": 0,
+   "cache_write_tokens": 0,
+   "cost_per_chat_usd": 0.001292,
+   "ttft_median_hit_s": null,
+   "ttft_median_miss_s": 0.843
+  },
+  "qwen/ts_end": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "95/95",
+   "cache_read_share_of_input": 0.712,
+   "cache_read_tokens": 138776,
+   "cache_write_tokens": 7304,
+   "cost_per_chat_usd": 0.000509,
+   "ttft_median_hit_s": 0.79,
+   "ttft_median_miss_s": null
+  },
+  "qwen/ts_first": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "0/95",
+   "cache_read_share_of_input": 0.0,
+   "cache_read_tokens": 0,
+   "cache_write_tokens": 148500,
+   "cost_per_chat_usd": 0.001509,
+   "ttft_median_hit_s": null,
+   "ttft_median_miss_s": 0.851
+  },
+  "qwen/ts_last": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "1/95",
+   "cache_read_share_of_input": 0.008,
+   "cache_read_tokens": 1486,
+   "cache_write_tokens": 147154,
+   "cost_per_chat_usd": 0.001477,
+   "ttft_median_hit_s": 0.717,
+   "ttft_median_miss_s": 0.903
+  },
+  "qwen/ts_msg": {
+   "chats": 5,
+   "calls": 100,
+   "hits_turn2plus": "95/95",
+   "cache_read_share_of_input": 0.696,
+   "cache_read_tokens": 138662,
+   "cache_write_tokens": 7298,
+   "cost_per_chat_usd": 0.00055,
+   "ttft_median_hit_s": 0.894,
+   "ttft_median_miss_s": null
+  }
+ },
+ "recheck_10_turns": {
+  "qwen/ts_last": {
+   "chats": 3,
+   "calls": 30,
+   "hits_turn2plus": "1/27",
+   "cache_read_share_of_input": 0.029,
+   "cache_read_tokens": 1486,
+   "cache_write_tokens": 43084,
+   "cost_per_chat_usd": 0.000657,
+   "ttft_median_hit_s": 0.624,
+   "ttft_median_miss_s": 0.831
+  },
+  "qwen/ts_msg": {
+   "chats": 3,
+   "calls": 30,
+   "hits_turn2plus": "27/27",
+   "cache_read_share_of_input": 0.761,
+   "cache_read_tokens": 39474,
+   "cache_write_tokens": 4386,
+   "cost_per_chat_usd": 0.000219,
+   "ttft_median_hit_s": 0.845,
+   "ttft_median_miss_s": null
+  }
+ },
+ "breakeven_qwen": {
+  "1": {
+   "breakpoint_usd": 6.01e-05,
+   "no_breakpoint_usd": 4.83e-05,
+   "fresh_prefix_usd": 4.92e-05,
+   "breakpoint_vs_fresh": 1.22,
+   "no_breakpoint_vs_fresh": 0.98
+  },
+  "2": {
+   "breakpoint_usd": 7.07e-05,
+   "no_breakpoint_usd": 6.76e-05,
+   "fresh_prefix_usd": 9.84e-05,
+   "breakpoint_vs_fresh": 0.72,
+   "no_breakpoint_vs_fresh": 0.69
+  },
+  "3": {
+   "breakpoint_usd": 7.88e-05,
+   "no_breakpoint_usd": 8.48e-05,
+   "fresh_prefix_usd": 0.0001468,
+   "breakpoint_vs_fresh": 0.54,
+   "no_breakpoint_vs_fresh": 0.58
+  },
+  "5": {
+   "breakpoint_usd": 9.87e-05,
+   "no_breakpoint_usd": 0.0001224,
+   "fresh_prefix_usd": 0.0002439,
+   "breakpoint_vs_fresh": 0.4,
+   "no_breakpoint_vs_fresh": 0.5
+  },
+  "10": {
+   "breakpoint_usd": 0.000149,
+   "no_breakpoint_usd": 0.0002301,
+   "fresh_prefix_usd": 0.0004911,
+   "breakpoint_vs_fresh": 0.3,
+   "no_breakpoint_vs_fresh": 0.47
+  }
+ },
+ "expiry_second_call": {
+  "gpt": {
+   "10": [
+    {
+     "cache_read": 1280,
+     "cache_write": 0,
+     "cost": 3.66e-05
+    },
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.42e-05
+    }
+   ],
+   "120": [
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.425e-05
+    },
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.425e-05
+    }
+   ],
+   "240": [
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.415e-05
+    },
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.425e-05
+    }
+   ],
+   "360": [
+    {
+     "cache_read": 1280,
+     "cache_write": 0,
+     "cost": 3.66e-05
+    },
+    {
+     "cache_read": 1280,
+     "cache_write": 0,
+     "cost": 3.665e-05
+    }
+   ],
+   "600": [
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.415e-05
+    },
+    {
+     "cache_read": 0,
+     "cache_write": 0,
+     "cost": 9.425e-05
+    }
+   ]
+  },
+  "qwen": {
+   "10": [
+    {
+     "cache_read": 1460,
+     "cache_write": 0,
+     "cost": 8.72e-06
+    },
+    {
+     "cache_read": 1461,
+     "cache_write": 0,
+     "cost": 8.723e-06
+    }
+   ],
+   "120": [
+    {
+     "cache_read": 1459,
+     "cache_write": 0,
+     "cost": 8.717e-06
+    },
+    {
+     "cache_read": 1461,
+     "cache_write": 0,
+     "cost": 9.243e-06
+    }
+   ],
+   "240": [
+    {
+     "cache_read": 1460,
+     "cache_write": 0,
+     "cost": 8.72e-06
+    },
+    {
+     "cache_read": 1461,
+     "cache_write": 0,
+     "cost": 8.593e-06
+    }
+   ],
+   "360": [
+    {
+     "cache_read": 0,
+     "cache_write": 1459,
+     "cost": 6.0302e-05
+    },
+    {
+     "cache_read": 0,
+     "cache_write": 1461,
+     "cost": 5.9858e-05
+    }
+   ],
+   "600": [
+    {
+     "cache_read": 0,
+     "cache_write": 1461,
+     "cost": 5.9858e-05
+    },
+    {
+     "cache_read": 0,
+     "cache_write": 1460,
+     "cost": 6.034e-05
+    }
+   ]
+  }
+ }
+}
